@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en-US" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Evaluating Health Plan Benefits Agents with Microsoft Foundry - Hands-on Lab</title>
+<meta name="description" content="Self-paced lab: build a gold-standard evaluation framework, custom domain evaluators, and a GitHub Actions release gate for a health plan benefits agent on Microsoft Foundry.">
+<style>:root{--navy:#0B1F3A;--blue:#0078D4;--blue-d:#005A9E;--bg:#F4F7FB;--card:#FFFFFF;--ink:#1B2333;--grey:#5F6B7A;
+--line:#DCE3EC;--tint:#E3EEF9;--ok:#107C10;--ok-bg:#E6F4E6;--warn-line:#C19C00;--warn-bg:#FFF4CE;--bad:#A4262C;--bad-bg:#FDE7E9;
+--code-bg:#0F1B2D;--code-ink:#E6EDF6;--code-bar:#16263E;--code-bar-ink:#AFC3DB;--btn:#24406A;--on-dark:#FFFFFF}
+@media (prefers-color-scheme:dark){:root{--bg:#0E1622;--card:#152132;--ink:#E6EDF6;--grey:#A9B4C2;--line:#25344A;--tint:#1B2C44;
+--ok-bg:#12301A;--ok:#7FD17F;--warn-bg:#3A2E0A;--warn-line:#F2C94C;--bad-bg:#3A1518;--bad:#F1707B;--blue:#4BA3F5;--blue-d:#7DBBF7;--navy:#0A1A30}}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Calibri,system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;font-size:16px}
+a{color:var(--blue-d)}
+header.hero{background:linear-gradient(135deg,#0B1F3A 0%,#0F3563 60%,#0078D4 100%);color:var(--on-dark);padding-block:56px 44px;padding-inline:max(24px,calc((100% - 1200px)/2))}
+.hero .eyebrow{letter-spacing:.14em;text-transform:uppercase;font-size:13px;font-weight:600}
+.hero h1{font-size:38px;margin-block:10px 8px;line-height:1.2}
+.hero p{max-width:820px;font-size:18px;margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-block-start:20px}
+.chips span{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);padding:4px 12px;border-radius:999px;font-size:13px}
+.wrap{display:grid;grid-template-columns:270px 1fr;gap:32px;max-width:1200px;margin-inline:auto;padding:28px 24px 80px}
+nav.toc{position:sticky;top:16px;align-self:start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;max-height:calc(100vh - 32px);overflow:auto}
+nav.toc h3{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--grey)}
+nav.toc ol{list-style:none;margin:0;padding:0}
+nav.toc a{display:flex;gap:10px;padding:6px 8px;border-radius:8px;text-decoration:none;color:var(--ink);font-size:14px}
+nav.toc a:hover{background:var(--tint)}
+nav.toc a span{color:var(--blue-d);font-weight:700;min-inline-size:22px}
+.progress{margin-block-start:14px;font-size:13px;color:var(--grey)}
+.bar{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin-block-start:6px}
+.bar i{display:block;height:100%;width:0;background:var(--blue);transition:width .3s}
+main{min-width:0}
+.module{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px 32px;margin-block-end:24px;box-shadow:0 1px 3px rgba(27,35,51,.06)}
+.mod-head{display:flex;gap:16px;align-items:center}
+.mod-num{background:var(--navy);color:var(--on-dark);font-weight:700;border-radius:10px;min-inline-size:48px;block-size:48px;display:grid;place-items:center;font-size:18px}
+.module h2{margin:0;font-size:24px}
+.mins{margin:2px 0 0;color:var(--grey);font-size:14px}
+.lead{font-size:17px;margin-block:14px 18px}
+h3{font-size:18px;margin-block:22px 10px;color:var(--blue-d)}
+h4{margin:0 0 6px;font-size:16px}
+.step{display:flex;gap:14px;padding:14px 0;border-block-start:1px solid var(--line)}
+.step-body{flex:1;min-width:0}
+.chk{position:relative}
+.chk input{position:absolute;opacity:0;inline-size:22px;block-size:22px;margin:0}
+.chk span{display:inline-block;inline-size:22px;block-size:22px;border:2px solid var(--blue);border-radius:6px;margin-block-start:2px;cursor:pointer}
+.chk input:checked+span{background:var(--blue);box-shadow:inset 0 0 0 3px var(--card)}
+.chk input:focus-visible+span{outline:2px solid var(--blue-d);outline-offset:2px}
+.code{margin-block:10px;border-radius:10px;overflow:hidden;border:1px solid #1E2E46}
+.code-bar{display:flex;justify-content:space-between;align-items:center;background:var(--code-bar);color:var(--code-bar-ink);padding:6px 12px;font-size:12px;font-family:Consolas,monospace}
+.copy{background:var(--btn);color:var(--on-dark);border:0;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer}
+.copy:hover{background:#0078D4}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);padding:14px 16px;overflow:auto;font-size:13px;line-height:1.5;max-height:520px}
+code{font-family:Consolas,"Cascadia Code",monospace;font-size:.92em}
+p code,li code,td code{background:var(--tint);padding:1px 5px;border-radius:4px}
+.tbl{overflow-x:auto;margin-block:10px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{background:var(--navy);color:var(--on-dark);text-align:start;padding:9px 12px;font-weight:600}
+td{padding:9px 12px;border-block-end:1px solid var(--line);vertical-align:top}
+tbody tr:nth-child(even) td{background:var(--tint)}
+.callout{border-radius:10px;padding:12px 16px;margin-block:12px;border-inline-start:5px solid}
+.callout strong{display:block;margin-block-end:2px}
+.callout.info{background:var(--tint);border-color:var(--blue)}
+.callout.ok{background:var(--ok-bg);border-color:var(--ok)}
+.callout.warn{background:var(--warn-bg);border-color:var(--warn-line)}
+.callout.bad{background:var(--bad-bg);border-color:var(--bad)}
+.stages{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.stage{border:1px solid var(--line);border-block-start:5px solid var(--ok);border-radius:10px;padding:14px;background:var(--card)}
+.stage.warn{border-block-start-color:var(--warn-line)}.stage.bad{border-block-start-color:var(--bad)}
+.stage span{display:inline-grid;place-items:center;inline-size:26px;block-size:26px;border-radius:50%;background:var(--navy);color:var(--on-dark);font-weight:700;margin-inline-end:8px}
+.stage p{margin:8px 0 0;font-size:14px;color:var(--grey)}
+.arch{display:flex;gap:10px;align-items:stretch}
+.lane{flex:1;background:var(--tint);border-radius:12px;padding:12px}
+.lane-t{font-weight:700;color:var(--blue-d);font-size:14px;margin-block-end:8px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;margin-block-end:8px}
+.arrow{display:grid;place-items:center;color:var(--blue);font-size:22px}
+.refs li{margin-block:4px}
+footer{color:var(--grey);font-size:13px;text-align:center;padding-block-end:40px}
+@media (max-width:900px){.wrap{grid-template-columns:1fr}nav.toc{position:static;max-height:none}.stages{grid-template-columns:1fr}.arch{flex-direction:column}.arrow{transform:rotate(90deg)}}
+@media print{nav.toc,.copy,.chk{display:none}.wrap{display:block;padding:0}.module{break-inside:avoid-page;box-shadow:none}pre{max-height:none;white-space:pre-wrap}header.hero{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="eyebrow">Hands-on lab &middot; Microsoft Foundry &middot; GitHub Actions</div>
+  <h1>Evaluating Health Plan Benefits Agents with Microsoft Foundry</h1>
+  <p>A self-paced, end-to-end lab for health plans and payers: synthetic benefits data, a grounded Foundry agent, gold-standard evaluation, custom domain evaluators, regression detection, and a GitHub Actions release gate.</p>
+  <div class="chips"><span>Foundry Agent Service</span><span>Foundry Evaluations</span><span>Azure AI Search</span><span>Application Insights</span><span>GitHub Actions + OIDC</span></div>
+</header>
+<div class="wrap">
+<nav class="toc" aria-label="Lab modules"><h3>Modules</h3><ol><li><a href="#overview"><span>00</span>Lab overview</a></li><li><a href="#prereqs"><span>01</span>Prerequisites and environment readiness check</a></li><li><a href="#data"><span>02</span>Create the synthetic benefit records</a></li><li><a href="#search"><span>03</span>Build the Azure AI Search index</a></li><li><a href="#agent"><span>04</span>Create the baseline agent (v1)</a></li><li><a href="#dataset"><span>05</span>Create the gold-standard evaluation dataset</a></li><li><a href="#evaluators"><span>06</span>Register the custom domain evaluators</a></li><li><a href="#baseline"><span>07</span>Stage 1 - Run the baseline evaluation</a></li><li><a href="#regression"><span>08</span>Stage 2 - Introduce the regression (v2)</a></li><li><a href="#compare"><span>09</span>Stage 3 - Compare runs and govern the release</a></li><li><a href="#github"><span>10</span>Automate the gate with GitHub Actions</a></li><li><a href="#optional"><span>11</span>Optional: production monitoring and red teaming</a></li><li><a href="#runofshow"><span>12</span>Presenting this lab as a live demo</a></li><li><a href="#troubleshoot"><span>13</span>Troubleshooting and cleanup</a></li></ol>
+<div class="progress"><span id="pct">0 steps done</span><div class="bar"><i id="barfill"></i></div></div></nav>
+<main>
+<section id="overview" class="module"><div class="mod-head"><span class="mod-num">00</span><div><h2>Lab overview</h2><p class="mins">Read first - 5 min</p></div></div><p class="lead">This lab builds a small, purpose-built evaluation framework for a health plan benefits assistant. It demonstrates one point: <b>an AI answer can be grounded, fluent, and still factually wrong for the member</b> - and a domain-specific evaluation framework on Microsoft Foundry catches it before release.</p><h3>What you will build</h3><div class="tbl"><table><thead><tr><th>Layer</th><th>What you build</th><th>Demo role</th></tr></thead><tbody><tr><td>Knowledge</td><td>10 fictional benefit records (Contoso Gold PPO 2026) in Azure AI Search</td><td>Retrieval source with deliberate near-neighbors</td></tr><tr><td>Agent</td><td>Foundry prompt agent <code>benefits-agent</code> v1 (baseline) and v2 (regressed)</td><td>System under test</td></tr><tr><td>Gold dataset</td><td>20 SME-style scenarios with expected service, coverage, and cost</td><td>Ground truth</td></tr><tr><td>Evaluators</td><td>4 built-in + 3 custom code-based evaluators</td><td>Part A vs. Part B story</td></tr><tr><td>Gate</td><td>Python gate script + GitHub Actions workflow + branch protection</td><td>Release governance</td></tr><tr><td>Observability</td><td>Application Insights tracing</td><td>Latency, tokens, trace drill-down</td></tr></tbody></table></div><h3>The three-stage story</h3><div class="stages"><div class="stage"><span>1</span><b>Baseline</b><p>v1 answers speech therapy questions correctly. All gates pass.</p></div><div class="stage warn"><span>2</span><b>Regression</b><p>v2 adds a "terminology normalization" prompt change. Speech therapy answers now use voice therapy's $60 / 10-visit facts. Groundedness still looks fine.</p></div><div class="stage bad"><span>3</span><b>Governance</b><p>Custom domain evaluators fail on critical rows. The gate blocks promotion; the failure becomes a permanent regression case.</p></div></div><h3>Architecture</h3><div class="arch"><div class="lane"><div class="lane-t">GitHub</div><div class="box">Repo: agent instructions, gold dataset, evaluator code</div><div class="box">Actions: benefits-eval-gate (OIDC)</div><div class="box">Branch protection: required check</div></div><div class="arrow" aria-hidden="true">&#10140;</div><div class="lane"><div class="lane-t">Microsoft Foundry project</div><div class="box">Agent Service: benefits-agent v1 / v2</div><div class="box">Model deployments: chat + judge + embeddings</div><div class="box">Evaluations: dataset, built-in + custom evaluators, run compare</div></div><div class="arrow" aria-hidden="true">&#10140;</div><div class="lane"><div class="lane-t">Azure data &amp; telemetry</div><div class="box">Azure AI Search: benefits-idx (hybrid + semantic)</div><div class="box">Blob Storage: benefit records</div><div class="box">Application Insights: traces</div></div></div><div class="callout info"><strong>Timing</strong><div>Build time is about 3-4 hours the first time. Run the evaluations ahead of time; a 20-row run takes a few minutes, so on the day you show finished results and optionally start one live run.</div></div><div class="callout info"><strong>Before you start</strong><div>This lab uses preview capabilities (custom evaluators, the GitHub evaluation action). Portal menu names and SDK parameters can change; check the References section for the current documentation.</div></div><div class="callout warn"><strong>Synthetic data only</strong><div>Every benefit record and scenario in this lab is fictional. Do not load real member data, PHI, or proprietary plan documents into a lab environment.</div></div></section><section id="prereqs" class="module"><div class="mod-head"><span class="mod-num">01</span><div><h2>Prerequisites and environment readiness check</h2><p class="mins">20 min</p></div></div><p class="lead">Confirm your Azure environment has what you need before building anything.</p><div class="step"><label class="chk"><input type="checkbox" data-step="s1" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Check your Azure environment</h4><div class="tbl"><table><thead><tr><th>Check</th><th>Where</th><th>Pass when</th></tr></thead><tbody><tr><td>Foundry project</td><td>Azure portal / Foundry portal</td><td>A Foundry resource and project exist (create one if needed)</td></tr><tr><td>Chat model deployed</td><td>Foundry portal &gt; Models + endpoints</td><td>A GPT chat deployment (e.g. gpt-4.1 or gpt-5-mini) for the agent</td></tr><tr><td>Judge model deployed</td><td>Same</td><td>A deployment for AI-assisted evaluators (can be the same model)</td></tr><tr><td>Embedding model deployed</td><td>Same</td><td>text-embedding-3-small or -large for the search index</td></tr><tr><td>Azure AI Search</td><td>Azure portal</td><td>Basic tier or above, semantic ranker enabled</td></tr><tr><td>Application Insights</td><td>Foundry portal &gt; project &gt; Tracing</td><td>Resource connected to the project</td></tr><tr><td>Evaluation region support</td><td>Foundry docs: evaluation region support</td><td>Project region supports AI-assisted and safety evaluators</td></tr></tbody></table></div></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s2" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Install local tools</h4><ul><li>Python 3.10+ and Git</li><li>Azure CLI (<code>az</code>) signed in to your tenant</li><li>GitHub CLI (<code>gh</code>) and a GitHub repo you can administer</li><li>VS Code (optional, for presenting code)</li></ul></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s3" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Create the project folder and Python environment</h4><div class="code"><div class="code-bar"><span class="code-title">bash</span><button class="copy" type="button" data-target="c1">Copy</button></div><pre id="c1"><code>mkdir benefits-eval-lab &amp;&amp; cd benefits-eval-lab
+mkdir -p benefits eval/evaluators .github/workflows
+python -m venv .venv &amp;&amp; source .venv/bin/activate      # Windows: .venv\Scripts\activate
+pip install &quot;azure-ai-projects&gt;=2.8.0&quot; azure-identity openai</code></pre></div></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s4" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Set environment variables</h4><div class="code"><div class="code-bar"><span class="code-title">bash</span><button class="copy" type="button" data-target="c2">Copy</button></div><pre id="c2"><code># Values from the Foundry portal: project Overview page and Models + endpoints
+export AZURE_AI_PROJECT_ENDPOINT=&quot;https://&lt;account&gt;.services.ai.azure.com/api/projects/&lt;project&gt;&quot;
+export AZURE_AI_MODEL_DEPLOYMENT_NAME=&quot;&lt;judge-model-deployment&gt;&quot;   # e.g. a gpt-4.1 / gpt-5-mini deployment
+export AGENT_NAME=&quot;benefits-agent&quot;
+export DATASET_VERSION=&quot;1&quot;
+az login --tenant &lt;tenant-id&gt;
+az account set --subscription &quot;&lt;subscription-id&gt;&quot;</code></pre></div></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s5" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Assign roles</h4><div class="code"><div class="code-bar"><span class="code-title">bash</span><button class="copy" type="button" data-target="c3">Copy</button></div><pre id="c3"><code># You (demo presenter) - on the Foundry project
+az role assignment create --assignee &lt;your-upn&gt; --role &quot;Foundry User&quot; --scope &lt;foundry-project-resource-id&gt;
+# Foundry project managed identity - read the search index at run time
+az role assignment create --assignee &lt;project-mi-principal-id&gt; --role &quot;Search Index Data Reader&quot; --scope &lt;search-resource-id&gt;
+# Search service managed identity - read blobs during indexing
+az role assignment create --assignee &lt;search-mi-principal-id&gt; --role &quot;Storage Blob Data Reader&quot; --scope &lt;storage-resource-id&gt;</code></pre></div><div class="callout info"><strong>Role names</strong><div>Foundry roles were recently renamed: <b>Foundry User</b> was previously <b>Azure AI User</b>. Use whichever name your tenant shows; the role ID is the same.</div></div></div></div></section><section id="data" class="module"><div class="mod-head"><span class="mod-num">02</span><div><h2>Create the synthetic benefit records</h2><p class="mins">15 min</p></div></div><p class="lead">Ten fictional records. Speech therapy and voice therapy are worded similarly but differ on every cost fact. That difference is what the custom evaluators detect.</p><div class="tbl"><table><thead><tr><th>Record</th><th>Copay</th><th>Visit limit</th><th>Prior auth</th><th>Out-of-network</th></tr></thead><tbody><tr><td><b>Speech therapy</b> BEN-ST-001</td><td>$35</td><td>20 / year</td><td>After 12th visit</td><td>40% after deductible</td></tr><tr><td><b>Voice therapy</b> BEN-VT-002</td><td>$60</td><td>10 / year</td><td>Before 1st visit</td><td>Not covered</td></tr><tr><td>Occupational therapy BEN-OT-003</td><td>$45</td><td>24 / year</td><td>No</td><td>40% after deductible</td></tr><tr><td>Physical therapy BEN-PT-004</td><td>$45</td><td>30 / year</td><td>No</td><td>40% after deductible</td></tr></tbody></table></div><div class="step"><label class="chk"><input type="checkbox" data-step="s6" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Generate the record files</h4><p>Save as <code>seed_docs.py</code> in the project root and run <code>python seed_docs.py</code>.</p><div class="code"><div class="code-bar"><span class="code-title">seed_docs.py</span><button class="copy" type="button" data-target="c4">Copy</button></div><pre id="c4"><code>from pathlib import Path
+
+DOCS = {
+    &#x27;speech-therapy.md&#x27;: &#x27;&#x27;&#x27;# Speech Therapy (Speech-Language Pathology) - Contoso Gold PPO 2026
+Record ID: BEN-ST-001 | Category: Rehabilitative therapy | Effective: 2026-01-01
+Service: Outpatient speech therapy delivered by a licensed speech-language pathologist (SLP)
+for speech, language, swallowing, or cognitive-communication disorders.
+Coverage status: Covered.
+In-network member cost: $35 copay per visit (deductible does not apply).
+Out-of-network member cost: 40% coinsurance after the $500 individual deductible.
+Visit limit: 20 visits per calendar year.
+Prior authorization: Required after the 12th visit in a calendar year.
+Exclusions: Services provided through a school-based education program.
+Not the same benefit as: Voice Therapy (BEN-VT-002).
+&#x27;&#x27;&#x27;,
+    &#x27;voice-therapy.md&#x27;: &#x27;&#x27;&#x27;# Voice Therapy (Laryngeal / Vocal Rehabilitation) - Contoso Gold PPO 2026
+Record ID: BEN-VT-002 | Category: Rehabilitative therapy | Effective: 2026-01-01
+Service: Voice therapy for diagnosed vocal cord dysfunction, vocal fold nodules, or paralysis.
+Coverage status: Covered when medically necessary.
+In-network member cost: $60 copay per visit (specialist tier).
+Out-of-network: Not covered.
+Visit limit: 10 visits per calendar year.
+Prior authorization: Required before the first visit.
+Exclusions: Vocal coaching, singing lessons, or performance voice training are not covered.
+Not the same benefit as: Speech Therapy (BEN-ST-001).
+&#x27;&#x27;&#x27;,
+    &#x27;occupational-therapy.md&#x27;: &#x27;&#x27;&#x27;# Occupational Therapy - Contoso Gold PPO 2026
+Record ID: BEN-OT-003 | Category: Rehabilitative therapy | Effective: 2026-01-01
+Coverage status: Covered.
+In-network member cost: $45 copay per visit.
+Out-of-network member cost: 40% coinsurance after deductible.
+Visit limit: 24 visits per calendar year. Prior authorization: Not required.
+&#x27;&#x27;&#x27;,
+    &#x27;physical-therapy.md&#x27;: &#x27;&#x27;&#x27;# Physical Therapy - Contoso Gold PPO 2026
+Record ID: BEN-PT-004 | Category: Rehabilitative therapy | Effective: 2026-01-01
+Coverage status: Covered.
+In-network member cost: $45 copay per visit.
+Out-of-network member cost: 40% coinsurance after deductible.
+Visit limit: 30 visits per calendar year. Prior authorization: Not required.
+&#x27;&#x27;&#x27;,
+    &#x27;dental.md&#x27;: &#x27;&#x27;&#x27;# Dental Benefits - Contoso Gold PPO 2026
+Record ID: BEN-DN-005 | Category: Dental | Effective: 2026-01-01
+Preventive cleanings: Covered at 100% in-network, twice per calendar year.
+Basic restorative (fillings): Covered at 80% after deductible in-network.
+&#x27;&#x27;&#x27;,
+    &#x27;vision.md&#x27;: &#x27;&#x27;&#x27;# Vision Benefits - Contoso Gold PPO 2026
+Record ID: BEN-VS-006 | Category: Vision | Effective: 2026-01-01
+Routine eye exam: $10 copay, once every 12 months.
+Frames: $150 allowance every 24 months. Contact lenses: $130 allowance (in lieu of frames).
+&#x27;&#x27;&#x27;,
+    &#x27;pharmacy.md&#x27;: &#x27;&#x27;&#x27;# Pharmacy Benefits - Contoso Gold PPO 2026
+Record ID: BEN-RX-007 | Category: Pharmacy | Effective: 2026-01-01
+Retail 30-day supply: Tier 1 generic $10 copay; Tier 2 preferred brand $35 copay; Tier 3 non-preferred $70 copay.
+Mail order 90-day supply: 2x the retail copay (Tier 1 = $20).
+&#x27;&#x27;&#x27;,
+    &#x27;acupuncture.md&#x27;: &#x27;&#x27;&#x27;# Acupuncture - Contoso Gold PPO 2026
+Record ID: BEN-AC-008 | Category: Alternative medicine | Effective: 2026-01-01
+Coverage status: Not covered. Acupuncture is excluded under this plan.
+&#x27;&#x27;&#x27;,
+    &#x27;mental-health.md&#x27;: &#x27;&#x27;&#x27;# Outpatient Mental Health - Contoso Gold PPO 2026
+Record ID: BEN-MH-009 | Category: Behavioral health | Effective: 2026-01-01
+Coverage status: Covered. In-network member cost: $25 copay per visit. No visit limit.
+&#x27;&#x27;&#x27;,
+    &#x27;advanced-imaging.md&#x27;: &#x27;&#x27;&#x27;# Advanced Imaging (MRI / CT) - Contoso Gold PPO 2026
+Record ID: BEN-IM-010 | Category: Diagnostic | Effective: 2026-01-01
+Coverage status: Covered. Prior authorization: Required.
+In-network member cost: $250 copay per scan.
+&#x27;&#x27;&#x27;,
+}
+
+out = Path(&#x27;benefits&#x27;); out.mkdir(exist_ok=True)
+for name, body in DOCS.items():
+    (out / name).write_text(body, encoding=&#x27;utf-8&#x27;)
+print(f&#x27;Wrote {len(DOCS)} benefit records to ./benefits&#x27;)
+</code></pre></div></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s7" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Upload to Blob Storage</h4><div class="code"><div class="code-bar"><span class="code-title">bash</span><button class="copy" type="button" data-target="c5">Copy</button></div><pre id="c5"><code># Use the storage account connected to the Foundry project (or any account Search can read)
+az storage container create --account-name &lt;storage&gt; --name benefits-docs --auth-mode login
+az storage blob upload-batch --account-name &lt;storage&gt; -d benefits-docs -s ./benefits --auth-mode login</code></pre></div></div></div></section><section id="search" class="module"><div class="mod-head"><span class="mod-num">03</span><div><h2>Build the Azure AI Search index</h2><p class="mins">20 min</p></div></div><p class="lead">Use the portal wizard so the index gets integrated vectorization and semantic ranking with no code.</p><div class="step"><label class="chk"><input type="checkbox" data-step="s8" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Run the import wizard</h4><ol><li>Azure portal &gt; your Azure AI Search service &gt; <b>Import data (new)</b>.</li><li>Data source: <b>Azure Blob Storage</b>, container <code>benefits-docs</code>; authenticate with the search service managed identity.</li><li>Scenario: <b>RAG</b>. Vectorize text with your Foundry embedding deployment.</li><li>Enable <b>semantic ranker</b>.</li><li>Object name prefix: <code>benefits-docs</code>. Note the generated index name (this lab calls it <code>benefits-idx</code>).</li><li>Create, then wait for the indexer to finish (10 documents).</li></ol></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s9" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Verify retrieval</h4><p>Search explorer &gt; query <code>speech therapy copay</code>. Confirm BEN-ST-001 ranks first and BEN-VT-002 appears lower. That near-neighbor proximity is the risk you will demonstrate.</p></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s10" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Connect Search to the Foundry project</h4><p>Foundry portal &gt; your project &gt; <b>Management center</b> (or project settings) &gt; <b>Connected resources</b> &gt; <b>New connection</b> &gt; Azure AI Search. Prefer Microsoft Entra ID authentication.</p></div></div></section><section id="agent" class="module"><div class="mod-head"><span class="mod-num">04</span><div><h2>Create the baseline agent (v1)</h2><p class="mins">20 min</p></div></div><p class="lead">A prompt agent grounded on the search index, built in the portal so you can show it live.</p><div class="step"><label class="chk"><input type="checkbox" data-step="s11" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Create the agent</h4><ol><li>Foundry portal &gt; <b>Build &gt; Agents &gt; Create agent</b>.</li><li>Name: <code>benefits-agent</code>. Model: your chat deployment.</li><li>Paste the instructions below.</li><li><b>Tools / Knowledge &gt; Add &gt; Azure AI Search</b>: choose the connection and the index; query type <b>hybrid + semantic</b>; top-k <b>5</b>.</li><li>Save. Note the version number. This is <b>v1</b>.</li></ol><div class="code"><div class="code-bar"><span class="code-title">Agent instructions - v1 (baseline)</span><button class="copy" type="button" data-target="c6">Copy</button></div><pre id="c6"><code>You are the Contoso Health benefits assistant for the
+Contoso Gold PPO 2026 plan (fictional demo data).
+
+Rules:
+1. Answer ONLY from benefit records returned by the Azure AI Search tool.
+2. Always name the exact service you matched and its Record ID.
+3. Always state the coverage status: covered, not covered, or prior authorization required.
+4. Always give the member cost (copay, coinsurance, deductible) and any visit limits.
+5. Never substitute a similar-sounding service. Speech therapy and voice therapy are
+   different benefits with different costs.
+6. If the question is ambiguous (for example &quot;therapy&quot;), ask which service the member means.
+7. If no record matches, say you can&#x27;t find that benefit and refer the member to Member Services.
+</code></pre></div></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s12" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Smoke-test in the playground</h4><p>Ask: <i>Is speech therapy covered under my plan, and what will I pay?</i></p><p>Expected: names speech therapy (BEN-ST-001), covered, <b>$35</b> copay, <b>20 visits</b>, prior authorization after the 12th visit.</p></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s13" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Turn on tracing</h4><p>Project &gt; <b>Tracing</b> (Observability) &gt; connect Application Insights if it isn't already. Rerun the question, then open the trace: you should see the search tool call, retrieved chunks, model latency, and token counts.</p></div></div></section><section id="dataset" class="module"><div class="mod-head"><span class="mod-num">05</span><div><h2>Create the gold-standard evaluation dataset</h2><p class="mins">15 min</p></div></div><p class="lead">Twenty scenarios covering the slices a health plan typically cares about: near-neighbor pairs, network, exclusions, prior authorization, dental, vision, pharmacy, ambiguous, and missing data. Seven are marked <b>critical</b> and are release-blocking.</p><div class="tbl"><table><thead><tr><th>Field</th><th>Purpose</th></tr></thead><tbody><tr><td><code>query</code></td><td>Member question sent to the agent</td></tr><tr><td><code>expected_service</code></td><td>Service the answer must name</td></tr><tr><td><code>expected_coverage</code></td><td>covered / not covered / prior authorization / clarify / unknown</td></tr><tr><td><code>expected_cost_terms</code></td><td>Pipe-separated facts that must appear (e.g. <code>$35|20 visits</code>)</td></tr><tr><td><code>forbidden_terms</code></td><td>Facts belonging only to the near-neighbor service (e.g. <code>$60|10 visits</code>)</td></tr><tr><td><code>ground_truth</code></td><td>SME reference answer for response completeness</td></tr><tr><td><code>slice</code>, <code>severity</code></td><td>Reporting slice and gate severity</td></tr></tbody></table></div><div class="step"><label class="chk"><input type="checkbox" data-step="s14" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Save the dataset</h4><p>Save as <code>eval/benefits-gold.jsonl</code>.</p><div class="code"><div class="code-bar"><span class="code-title">eval/benefits-gold.jsonl</span><button class="copy" type="button" data-target="c7">Copy</button></div><pre id="c7"><code>{&quot;scenario_id&quot;: &quot;BEN-Q001&quot;, &quot;query&quot;: &quot;Is speech therapy covered under my plan, and what will I pay?&quot;, &quot;expected_service&quot;: &quot;speech therapy&quot;, &quot;expected_coverage&quot;: &quot;covered&quot;, &quot;expected_cost_terms&quot;: &quot;$35|20 visits&quot;, &quot;forbidden_terms&quot;: &quot;$60|10 visits&quot;, &quot;ground_truth&quot;: &quot;Speech therapy is covered: $35 copay per in-network visit, 20 visits per year; prior authorization after the 12th visit.&quot;, &quot;slice&quot;: &quot;near-neighbor&quot;, &quot;severity&quot;: &quot;critical&quot;}
+{&quot;scenario_id&quot;: &quot;BEN-Q002&quot;, &quot;query&quot;: &quot;How many speech therapy visits do I get each year?&quot;, &quot;expected_service&quot;: &quot;speech therapy&quot;, &quot;expected_coverage&quot;: &quot;covered&quot;, &quot;expected_cost_terms&quot;: &quot;20 visits&quot;, &quot;forbidden_terms&quot;: &quot;10 visits&quot;, &quot;ground_truth&quot;: &quot;Speech therapy is limited to 20 visits per calendar year.&quot;, &quot;slice&quot;: &quot;near-neighbor&quot;, &quot;severity&quot;: &quot;critical&quot;}
+{&quot;scenario_id&quot;: &quot;BEN-Q003&quot;, &quot;query&quot;: &quot;Do I need prior authorization for speech therapy?&quot;, &quot;expected_service&quot;: &quot;speech therapy&quot;, &quot;expected_coverage&quot;: &quot;prior authorization&quot;, &quot;expected_cost_terms&quot;: &quot;12th visit&quot;, &quot;forbidden_terms&quot;: &quot;before the first visit&quot;, &quot;ground_truth&quot;: &quot;Prior authorization is required after the 12th speech therapy visit in a calendar year.&quot;, &quot;slice&quot;: &quot;near-neighbor&quot;, &quot;severity&quot;: &quot;critical&quot;}
+{&quot;scenario_id&quot;: &quot;BEN-Q004&quot;, &quot;query&quot;: &quot;What does voice therapy cost me?&quot;, &quot;expected_service&quot;: &quot;voice therapy&quot;, &quot;expected_coverage&quot;: &quot;prior authorization&quot;, &quot;expected_cost_terms&quot;: &quot;$60|10 visits&quot;, &quot;forbidden_terms&quot;: &quot;$35|20 visits&quot;, &quot;ground_truth&quot;: &quot;Voice therapy is covered when medically necessary: $60 copay, 10 visits per year, prior authorization before the first visit.&quot;, &quot;slice&quot;: &quot;near-neighbor&quot;, &quot;severity&quot;: &quot;critical&quot;}
+{&quot;scenario_id&quot;: &quot;BEN-Q005&quot;, &quot;query&quot;: &quot;Is vocal coaching for singing covered?&quot;, &quot;expected_service&quot;: &quot;voice therapy&quot;, &quot;expected_coverage&quot;: &quot;not covered&quot;, &quot;expected_cost_terms&quot;: &quot;&quot;, &quot;forbidden_terms&quot;: &quot;$35&quot;, &quot;ground_truth&quot;: &quot;Vocal coaching and singing lessons are not covered.&quot;, &quot;slice&quot;: &quot;exclusion&quot;, &quot;severity&quot;: &quot;high&quot;}
+{&quot;scenario_id&quot;: &quot;BEN-Q006&quot;, &quot;query&quot;: &quot;My son needs speech therapy from an out-of-network therapist. What will I pay?&quot;, &quot;expected_service&quot;: &quot;speech therapy&quot;, &quot;expected_coverage&quot;: &quot;covered&quot;, &quot;expected_cost_terms&quot;: &quot;40%|deductible&quot;, &quot;forbidden_terms&quot;: &quot;$60&quot;, &quot;ground_truth&quot;: &quot;Out-of-network speech therapy is 40% coinsurance after the $500 deductible.&quot;, &quot;slice&quot;: &quot;network&quot;, &quot;severity&quot;: &quot;critical&quot;}
+{&quot;scenario_id&quot;: &quot;BEN-Q007&quot;, &quot;query&quot;: &quot;Is out-of-network voice therapy covered?&quot;, &quot;expected_service&quot;: &quot;voice therapy&quot;, &quot;expected_coverage&quot;: &quot;not covered&quot;, &quot;expected_cost_terms&quot;: &quot;&quot;, &quot;forbidden_terms&quot;: &quot;40%&quot;, &quot;ground_truth&quot;: &quot;Out-of-network voice therapy is not covered.&quot;, &quot;slice&quot;: &quot;network&quot;, &quot;severity&quot;: &quot;critical&quot;}
+{&quot;scenario_id&quot;: &quot;BEN-Q008&quot;, &quot;query&quot;: &quot;What is my copay for occupational therapy?&quot;, &quot;expected_service&quot;: &quot;occupational therapy&quot;, &quot;expected_coverage&quot;: &quot;covered&quot;, &quot;expected_cost_terms&quot;: &quot;$45|24 visits&quot;, &quot;forbidden_terms&quot;: &quot;$35&quot;, &quot;ground_truth&quot;: &quot;Occupational therapy: $45 copay per visit, 24 visits per year.&quot;, &quot;slice&quot;: &quot;near-neighbor&quot;, &quot;severity&quot;: &quot;high&quot;}
+{&quot;scenario_id&quot;: &quot;BEN-Q009&quot;, &quot;query&quot;: &quot;How many physical therapy visits are covered?&quot;, &quot;expected_service&quot;: &quot;physical therapy&quot;, &quot;expected_coverage&quot;: &quot;covered&quot;, &quot;expected_cost_terms&quot;: &quot;30 visits&quot;, &quot;forbidden_terms&quot;: &quot;24 visits&quot;, &quot;ground_truth&quot;: &quot;Physical therapy is limited to 30 visits per year.&quot;, &quot;slice&quot;: &quot;near-neighbor&quot;, &quot;severity&quot;: &quot;high&quot;}
+{&quot;scenario_id&quot;: &quot;BEN-Q010&quot;, &quot;query&quot;: &quot;Are teeth cleanings covered?&quot;, &quot;expected_service&quot;: &quot;cleaning&quot;, &quot;expected_coverage&quot;: &quot;covered&quot;, &quot;expected_cost_terms&quot;: &quot;100%|twice&quot;, &quot;forbidden_terms&quot;: &quot;&quot;, &quot;ground_truth&quot;: &quot;Preventive cleanings are covered at 100% in-network twice per year.&quot;, &quot;slice&quot;: &quot;dental&quot;, &quot;severity&quot;: &quot;medium&quot;}
+{&quot;scenario_id&quot;: &quot;BEN-Q011&quot;, &quot;query&quot;: &quot;What do I pay for a filling?&quot;, &quot;expected_service&quot;: &quot;filling&quot;, &quot;expected_coverage&quot;: &quot;covered&quot;, &quot;expected_cost_terms&quot;: &quot;80%|deductible&quot;, &quot;forbidden_terms&quot;: &quot;&quot;, &quot;ground_truth&quot;: &quot;Fillings are covered at 80% after deductible in-network.&quot;, &quot;slice&quot;: &quot;dental&quot;, &quot;severity&quot;: &quot;medium&quot;}
+{&quot;scenario_id&quot;: &quot;BEN-Q012&quot;, &quot;query&quot;: &quot;How much is a routine eye exam?&quot;, &quot;expected_service&quot;: &quot;eye exam&quot;, &quot;expected_coverage&quot;: &quot;covered&quot;, &quot;expected_cost_terms&quot;: &quot;$10&quot;, &quot;forbidden_terms&quot;: &quot;&quot;, &quot;ground_truth&quot;: &quot;A routine eye exam is a $10 copay once every 12 months.&quot;, &quot;slice&quot;: &quot;vision&quot;, &quot;severity&quot;: &quot;medium&quot;}
+{&quot;scenario_id&quot;: &quot;BEN-Q013&quot;, &quot;query&quot;: &quot;What is my allowance for glasses frames?&quot;, &quot;expected_service&quot;: &quot;frames&quot;, &quot;expected_coverage&quot;: &quot;covered&quot;, &quot;expected_cost_terms&quot;: &quot;$150&quot;, &quot;forbidden_terms&quot;: &quot;$130&quot;, &quot;ground_truth&quot;: &quot;Frames have a $150 allowance every 24 months.&quot;, &quot;slice&quot;: &quot;vision&quot;, &quot;severity&quot;: &quot;medium&quot;}
+{&quot;scenario_id&quot;: &quot;BEN-Q014&quot;, &quot;query&quot;: &quot;What is my copay for a preferred brand drug?&quot;, &quot;expected_service&quot;: &quot;tier 2&quot;, &quot;expected_coverage&quot;: &quot;covered&quot;, &quot;expected_cost_terms&quot;: &quot;$35&quot;, &quot;forbidden_terms&quot;: &quot;&quot;, &quot;ground_truth&quot;: &quot;Tier 2 preferred brand is a $35 copay for a 30-day retail supply.&quot;, &quot;slice&quot;: &quot;pharmacy&quot;, &quot;severity&quot;: &quot;high&quot;}
+{&quot;scenario_id&quot;: &quot;BEN-Q015&quot;, &quot;query&quot;: &quot;What does a 90-day mail order generic cost?&quot;, &quot;expected_service&quot;: &quot;mail order&quot;, &quot;expected_coverage&quot;: &quot;covered&quot;, &quot;expected_cost_terms&quot;: &quot;$20&quot;, &quot;forbidden_terms&quot;: &quot;&quot;, &quot;ground_truth&quot;: &quot;A 90-day mail-order Tier 1 generic costs $20 (2x retail).&quot;, &quot;slice&quot;: &quot;pharmacy&quot;, &quot;severity&quot;: &quot;medium&quot;}
+{&quot;scenario_id&quot;: &quot;BEN-Q016&quot;, &quot;query&quot;: &quot;Is acupuncture covered?&quot;, &quot;expected_service&quot;: &quot;acupuncture&quot;, &quot;expected_coverage&quot;: &quot;not covered&quot;, &quot;expected_cost_terms&quot;: &quot;&quot;, &quot;forbidden_terms&quot;: &quot;&quot;, &quot;ground_truth&quot;: &quot;Acupuncture is not covered.&quot;, &quot;slice&quot;: &quot;exclusion&quot;, &quot;severity&quot;: &quot;high&quot;}
+{&quot;scenario_id&quot;: &quot;BEN-Q017&quot;, &quot;query&quot;: &quot;What do I pay for outpatient therapy with a psychologist?&quot;, &quot;expected_service&quot;: &quot;mental health&quot;, &quot;expected_coverage&quot;: &quot;covered&quot;, &quot;expected_cost_terms&quot;: &quot;$25&quot;, &quot;forbidden_terms&quot;: &quot;&quot;, &quot;ground_truth&quot;: &quot;Outpatient mental health is a $25 copay per visit with no visit limit.&quot;, &quot;slice&quot;: &quot;behavioral&quot;, &quot;severity&quot;: &quot;high&quot;}
+{&quot;scenario_id&quot;: &quot;BEN-Q018&quot;, &quot;query&quot;: &quot;Do I need approval before an MRI and what will it cost?&quot;, &quot;expected_service&quot;: &quot;mri&quot;, &quot;expected_coverage&quot;: &quot;prior authorization&quot;, &quot;expected_cost_terms&quot;: &quot;$250&quot;, &quot;forbidden_terms&quot;: &quot;&quot;, &quot;ground_truth&quot;: &quot;MRI requires prior authorization; $250 copay per scan.&quot;, &quot;slice&quot;: &quot;prior-auth&quot;, &quot;severity&quot;: &quot;critical&quot;}
+{&quot;scenario_id&quot;: &quot;BEN-Q019&quot;, &quot;query&quot;: &quot;Is therapy covered?&quot;, &quot;expected_service&quot;: &quot;therapy&quot;, &quot;expected_coverage&quot;: &quot;clarify&quot;, &quot;expected_cost_terms&quot;: &quot;&quot;, &quot;forbidden_terms&quot;: &quot;&quot;, &quot;ground_truth&quot;: &quot;Ambiguous - the assistant should ask which type of therapy.&quot;, &quot;slice&quot;: &quot;ambiguous&quot;, &quot;severity&quot;: &quot;high&quot;}
+{&quot;scenario_id&quot;: &quot;BEN-Q020&quot;, &quot;query&quot;: &quot;Is hippotherapy covered?&quot;, &quot;expected_service&quot;: &quot;hippotherapy&quot;, &quot;expected_coverage&quot;: &quot;unknown&quot;, &quot;expected_cost_terms&quot;: &quot;&quot;, &quot;forbidden_terms&quot;: &quot;&quot;, &quot;ground_truth&quot;: &quot;No record exists - the assistant should say it cannot find the benefit and refer to Member Services.&quot;, &quot;slice&quot;: &quot;missing-data&quot;, &quot;severity&quot;: &quot;high&quot;}</code></pre></div></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s15" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Upload it to the Foundry project</h4><div class="code"><div class="code-bar"><span class="code-title">eval/upload_dataset.py</span><button class="copy" type="button" data-target="c8">Copy</button></div><pre id="c8"><code>import os
+from azure.identity import DefaultAzureCredential
+from azure.ai.projects import AIProjectClient
+
+project = AIProjectClient(endpoint=os.environ[&quot;AZURE_AI_PROJECT_ENDPOINT&quot;],
+                          credential=DefaultAzureCredential())
+ds = project.datasets.upload_file(name=&quot;benefits-gold&quot;, version=&quot;1&quot;,
+                                  file_path=&quot;eval/benefits-gold.jsonl&quot;)
+print(&quot;Dataset id:&quot;, ds.id)
+</code></pre></div><p>Run <code>python eval/upload_dataset.py</code>. The dataset appears under <b>Evaluations &gt; Datasets</b>.</p></div></div></section><section id="evaluators" class="module"><div class="mod-head"><span class="mod-num">06</span><div><h2>Register the custom domain evaluators</h2><p class="mins">25 min</p></div></div><p class="lead">Three deterministic code-based evaluators. Each is a Python <code>grade(sample, item)</code> function that returns 0.0-1.0 and runs in a sandbox with no network access.</p><div class="step"><label class="chk"><input type="checkbox" data-step="s16" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Service match - near-neighbor detection</h4><div class="code"><div class="code-bar"><span class="code-title">eval/evaluators/service_match.py</span><button class="copy" type="button" data-target="c9">Copy</button></div><pre id="c9"><code>def grade(sample: dict, item: dict) -&gt; float:
+    &quot;&quot;&quot;Service match: the answer names the expected service and contains
+    no facts that belong only to its near-neighbor service.&quot;&quot;&quot;
+    try:
+        resp = (item.get(&quot;response&quot;) or (item.get(&quot;sample&quot;) or {}).get(&quot;output_text&quot;) or &quot;&quot;).lower()
+        expected = (item.get(&quot;expected_service&quot;) or &quot;&quot;).lower()
+        forbidden = [t.strip().lower() for t in (item.get(&quot;forbidden_terms&quot;) or &quot;&quot;).split(&quot;|&quot;) if t.strip()]
+        if not resp:
+            return 0.0
+        if expected and expected not in (&quot;therapy&quot;, &quot;hippotherapy&quot;) and expected not in resp:
+            return 0.0
+        if any(f in resp for f in forbidden):
+            return 0.0
+        return 1.0
+    except Exception:
+        return 0.0
+</code></pre></div></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s17" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Cost and limit accuracy</h4><div class="code"><div class="code-bar"><span class="code-title">eval/evaluators/cost_accuracy.py</span><button class="copy" type="button" data-target="c10">Copy</button></div><pre id="c10"><code>def grade(sample: dict, item: dict) -&gt; float:
+    &quot;&quot;&quot;Cost accuracy: share of required cost/limit facts present in the answer.&quot;&quot;&quot;
+    try:
+        resp = (item.get(&quot;response&quot;) or (item.get(&quot;sample&quot;) or {}).get(&quot;output_text&quot;) or &quot;&quot;).lower()
+        terms = [t.strip().lower() for t in (item.get(&quot;expected_cost_terms&quot;) or &quot;&quot;).split(&quot;|&quot;) if t.strip()]
+        if not terms:
+            return 1.0          # nothing to check for this scenario
+        if not resp:
+            return 0.0
+        return sum(1 for t in terms if t in resp) / len(terms)
+    except Exception:
+        return 0.0
+</code></pre></div></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s18" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Coverage status</h4><div class="code"><div class="code-bar"><span class="code-title">eval/evaluators/coverage_status.py</span><button class="copy" type="button" data-target="c11">Copy</button></div><pre id="c11"><code>def grade(sample: dict, item: dict) -&gt; float:
+    &quot;&quot;&quot;Coverage status: covered / not covered / prior authorization / clarify / unknown.&quot;&quot;&quot;
+    try:
+        resp = (item.get(&quot;response&quot;) or (item.get(&quot;sample&quot;) or {}).get(&quot;output_text&quot;) or &quot;&quot;).lower()
+        exp = (item.get(&quot;expected_coverage&quot;) or &quot;&quot;).lower()
+        neg = any(k in resp for k in (&quot;not covered&quot;, &quot;isn&#x27;t covered&quot;, &quot;is not covered&quot;, &quot;excluded&quot;))
+        pa = any(k in resp for k in (&quot;prior authorization&quot;, &quot;prior auth&quot;, &quot;preauthorization&quot;, &quot;pre-approval&quot;))
+        if exp == &quot;covered&quot;:
+            return 1.0 if (&quot;covered&quot; in resp and not neg) else 0.0
+        if exp == &quot;not covered&quot;:
+            return 1.0 if neg else 0.0
+        if exp == &quot;prior authorization&quot;:
+            return 1.0 if (pa and not neg) else 0.0
+        if exp == &quot;clarify&quot;:
+            return 1.0 if (&quot;?&quot; in resp or &quot;which&quot; in resp) else 0.0
+        if exp == &quot;unknown&quot;:
+            return 1.0 if any(k in resp for k in (&quot;can&#x27;t find&quot;, &quot;cannot find&quot;, &quot;couldn&#x27;t find&quot;, &quot;not listed&quot;,
+                                                   &quot;no record&quot;, &quot;member services&quot;)) else 0.0
+        return 0.0
+    except Exception:
+        return 0.0
+</code></pre></div></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s19" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Register them in the evaluator catalog</h4><div class="code"><div class="code-bar"><span class="code-title">eval/register_evaluators.py</span><button class="copy" type="button" data-target="c12">Copy</button></div><pre id="c12"><code>&quot;&quot;&quot;Register the three benefits domain code-based evaluators in the
+Foundry evaluator catalog. Run once per project (bump the version to update).&quot;&quot;&quot;
+import os
+from pathlib import Path
+from azure.identity import DefaultAzureCredential
+from azure.ai.projects import AIProjectClient
+from azure.ai.projects.models import EvaluatorCategory, EvaluatorDefinitionType
+
+project = AIProjectClient(endpoint=os.environ[&quot;AZURE_AI_PROJECT_ENDPOINT&quot;],
+                          credential=DefaultAzureCredential())
+
+EVALUATORS = {
+    &quot;benefits_service_match&quot;:  (&quot;Benefits - Service match (near-neighbor)&quot;, &quot;evaluators/service_match.py&quot;),
+    &quot;benefits_cost_accuracy&quot;:  (&quot;Benefits - Cost and limit accuracy&quot;,       &quot;evaluators/cost_accuracy.py&quot;),
+    &quot;benefits_coverage_status&quot;:(&quot;Benefits - Coverage status&quot;,               &quot;evaluators/coverage_status.py&quot;),
+}
+FIELDS = [&quot;response&quot;, &quot;expected_service&quot;, &quot;expected_coverage&quot;,
+          &quot;expected_cost_terms&quot;, &quot;forbidden_terms&quot;]
+
+for name, (display, path) in EVALUATORS.items():
+    ev = project.evaluators.create_version(
+        name=name,
+        evaluator_version={
+            &quot;name&quot;: name,
+            &quot;display_name&quot;: display,
+            &quot;categories&quot;: [EvaluatorCategory.QUALITY],
+            &quot;description&quot;: f&quot;Benefits evaluation lab - {display}&quot;,
+            &quot;definition&quot;: {
+                &quot;type&quot;: EvaluatorDefinitionType.CODE,
+                &quot;code_text&quot;: Path(path).read_text(encoding=&quot;utf-8&quot;),
+                &quot;init_parameters&quot;: {
+                    &quot;type&quot;: &quot;object&quot;,
+                    &quot;properties&quot;: {&quot;deployment_name&quot;: {&quot;type&quot;: &quot;string&quot;},
+                                   &quot;pass_threshold&quot;: {&quot;type&quot;: &quot;number&quot;}},
+                    &quot;required&quot;: [&quot;deployment_name&quot;, &quot;pass_threshold&quot;],
+                },
+                &quot;data_schema&quot;: {
+                    &quot;type&quot;: &quot;object&quot;,
+                    &quot;properties&quot;: {f: {&quot;type&quot;: &quot;string&quot;} for f in FIELDS},
+                    &quot;required&quot;: [&quot;response&quot;],
+                },
+                &quot;metrics&quot;: {&quot;result&quot;: {&quot;type&quot;: &quot;continuous&quot;, &quot;desirable_direction&quot;: &quot;increase&quot;,
+                                       &quot;min_value&quot;: 0.0, &quot;max_value&quot;: 1.0}},
+            },
+        },
+    )
+    print(f&quot;Registered {ev.name} v{ev.version}&quot;)
+</code></pre></div><p>Run from the <code>eval</code> folder: <code>cd eval &amp;&amp; python register_evaluators.py &amp;&amp; cd ..</code>. Confirm all three appear under <b>Evaluations &gt; Evaluator catalog</b>.</p><div class="callout warn"><strong>Preview API</strong><div>Custom evaluators are in preview and the registration schema is still changing. If the SDK rejects a field, create each evaluator in the portal instead: <b>Evaluator catalog &gt; Create &gt; Code-based</b>, paste the <code>grade</code> function, and add <code>deployment_name</code> and <code>pass_threshold</code> as init parameters. Also compare against the current custom evaluator sample in the azure-sdk-for-python repo.</div></div></div></div></section><section id="baseline" class="module"><div class="mod-head"><span class="mod-num">07</span><div><h2>Stage 1 - Run the baseline evaluation</h2><p class="mins">20 min</p></div></div><p class="lead">One script creates the evaluation (schema plus 7 testing criteria), sends every scenario to the agent, scores the responses, and applies the release gate.</p><div class="step"><label class="chk"><input type="checkbox" data-step="s20" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Save the evaluation runner</h4><div class="code"><div class="code-bar"><span class="code-title">eval/requirements.txt</span><button class="copy" type="button" data-target="c13">Copy</button></div><pre id="c13"><code>azure-ai-projects&gt;=2.8.0
+azure-identity
+openai
+</code></pre></div><div class="code"><div class="code-bar"><span class="code-title">eval/run_eval.py</span><button class="copy" type="button" data-target="c14">Copy</button></div><pre id="c14"><code>&quot;&quot;&quot;Run the benefits domain evaluation against one agent version.
+Usage:
+  python eval/run_eval.py --agent-version 1                        # baseline, creates the eval
+  python eval/run_eval.py --agent-version 2 --eval-id &lt;id&gt; --gate  # candidate, same eval, gate on
+&quot;&quot;&quot;
+import argparse, os, sys, time
+from azure.identity import DefaultAzureCredential
+from azure.ai.projects import AIProjectClient
+from azure.ai.projects.models import TestingCriterionAzureAIEvaluator
+from openai.types.eval_create_params import DataSourceConfigCustom
+
+ap = argparse.ArgumentParser()
+ap.add_argument(&quot;--agent&quot;, default=os.environ.get(&quot;AGENT_NAME&quot;, &quot;benefits-agent&quot;))
+ap.add_argument(&quot;--agent-version&quot;, required=True)
+ap.add_argument(&quot;--eval-id&quot;, default=os.environ.get(&quot;BENEFITS_EVAL_ID&quot;) or None)
+ap.add_argument(&quot;--dataset-version&quot;, default=os.environ.get(&quot;DATASET_VERSION&quot;, &quot;1&quot;))
+ap.add_argument(&quot;--gate&quot;, action=&quot;store_true&quot;)
+a = ap.parse_args()
+
+judge = os.environ[&quot;AZURE_AI_MODEL_DEPLOYMENT_NAME&quot;]
+project = AIProjectClient(endpoint=os.environ[&quot;AZURE_AI_PROJECT_ENDPOINT&quot;],
+                          credential=DefaultAzureCredential())
+client = project.get_openai_client()
+dataset = project.datasets.get(name=&quot;benefits-gold&quot;, version=a.dataset_version)
+
+FIELDS = [&quot;scenario_id&quot;, &quot;query&quot;, &quot;expected_service&quot;, &quot;expected_coverage&quot;,
+          &quot;expected_cost_terms&quot;, &quot;forbidden_terms&quot;, &quot;ground_truth&quot;, &quot;slice&quot;, &quot;severity&quot;]
+DOMAIN_MAP = {&quot;response&quot;: &quot;{{sample.output_text}}&quot;,
+          **{f: &quot;{{item.%s}}&quot; % f for f in FIELDS if f.startswith((&quot;expected&quot;, &quot;forbidden&quot;))}}
+
+def crit(name, evaluator, mapping, extra=None):
+    params = {&quot;deployment_name&quot;: judge, **(extra or {})}
+    return TestingCriterionAzureAIEvaluator(type=&quot;azure_ai_evaluator&quot;, name=name,
+                                            evaluator_name=evaluator,
+                                            initialization_parameters=params,
+                                            data_mapping=mapping)
+
+testing_criteria = [
+    # ---- Microsoft built-in evaluators (Part A of the demo) ----
+    crit(&quot;groundedness&quot;, &quot;builtin.groundedness&quot;,
+         {&quot;query&quot;: &quot;{{item.query}}&quot;, &quot;response&quot;: &quot;{{sample.output_items}}&quot;}),
+    crit(&quot;relevance&quot;, &quot;builtin.relevance&quot;,
+         {&quot;query&quot;: &quot;{{item.query}}&quot;, &quot;response&quot;: &quot;{{sample.output_text}}&quot;}),
+    crit(&quot;response_completeness&quot;, &quot;builtin.response_completeness&quot;,
+         {&quot;response&quot;: &quot;{{sample.output_text}}&quot;, &quot;ground_truth&quot;: &quot;{{item.ground_truth}}&quot;}),
+    crit(&quot;task_adherence&quot;, &quot;builtin.task_adherence&quot;,
+         {&quot;query&quot;: &quot;{{item.query}}&quot;, &quot;response&quot;: &quot;{{sample.output_items}}&quot;}),
+    # ---- Domain-specific custom evaluators (Part B of the demo) ----
+    crit(&quot;benefits_service_match&quot;,   &quot;benefits_service_match&quot;,   DOMAIN_MAP, {&quot;pass_threshold&quot;: 1.0}),
+    crit(&quot;benefits_cost_accuracy&quot;,   &quot;benefits_cost_accuracy&quot;,   DOMAIN_MAP, {&quot;pass_threshold&quot;: 1.0}),
+    crit(&quot;benefits_coverage_status&quot;, &quot;benefits_coverage_status&quot;, DOMAIN_MAP, {&quot;pass_threshold&quot;: 1.0}),
+]
+
+eval_id = a.eval_id
+if not eval_id:
+    ev = client.evals.create(
+        name=&quot;Benefits agent - domain evaluation&quot;,
+        data_source_config=DataSourceConfigCustom(
+            type=&quot;custom&quot;,
+            item_schema={&quot;type&quot;: &quot;object&quot;,
+                         &quot;properties&quot;: {f: {&quot;type&quot;: &quot;string&quot;} for f in FIELDS},
+                         &quot;required&quot;: [&quot;query&quot;]},
+            include_sample_schema=True),
+        testing_criteria=testing_criteria)
+    eval_id = ev.id
+    print(f&quot;Created eval {eval_id}  (reuse it with --eval-id so runs can be compared)&quot;)
+
+run = client.evals.runs.create(
+    eval_id=eval_id,
+    name=f&quot;{a.agent}-v{a.agent_version}&quot;,
+    data_source={
+        &quot;type&quot;: &quot;azure_ai_target_completions&quot;,
+        &quot;source&quot;: {&quot;type&quot;: &quot;file_id&quot;, &quot;id&quot;: dataset.id},
+        &quot;input_messages&quot;: {&quot;type&quot;: &quot;template&quot;, &quot;template&quot;: [
+            {&quot;type&quot;: &quot;message&quot;, &quot;role&quot;: &quot;user&quot;,
+             &quot;content&quot;: {&quot;type&quot;: &quot;input_text&quot;, &quot;text&quot;: &quot;{{item.query}}&quot;}}]},
+        &quot;target&quot;: {&quot;type&quot;: &quot;azure_ai_agent&quot;, &quot;name&quot;: a.agent, &quot;version&quot;: a.agent_version},
+    })
+print(f&quot;Run {run.id} started for {a.agent} v{a.agent_version}&quot;)
+
+while True:
+    run = client.evals.runs.retrieve(run_id=run.id, eval_id=eval_id)
+    if run.status in (&quot;completed&quot;, &quot;failed&quot;, &quot;canceled&quot;):
+        break
+    time.sleep(10)
+print(f&quot;Status: {run.status}\nReport: {run.report_url}&quot;)
+if run.status != &quot;completed&quot;:
+    sys.exit(2)
+
+# ------------------------- release gate -------------------------
+def g(o, k, d=None):
+    return o.get(k, d) if isinstance(o, dict) else getattr(o, k, d)
+
+DOMAIN = {&quot;benefits_service_match&quot;, &quot;benefits_cost_accuracy&quot;, &quot;benefits_coverage_status&quot;}
+POOLED = {&quot;groundedness&quot;: 0.90, &quot;relevance&quot;: 0.90}
+pooled = {k: [0, 0] for k in POOLED}
+blocking = []
+for it in client.evals.runs.output_items.list(run_id=run.id, eval_id=eval_id):
+    row = g(it, &quot;datasource_item&quot;, {}) or {}
+    for r in g(it, &quot;results&quot;, []) or []:
+        name, passed = g(r, &quot;name&quot;), bool(g(r, &quot;passed&quot;))
+        if name in DOMAIN and row.get(&quot;severity&quot;) == &quot;critical&quot; and not passed:
+            blocking.append(f&quot;{row.get(&#x27;scenario_id&#x27;)} [{row.get(&#x27;slice&#x27;)}] {name}: {row.get(&#x27;query&#x27;)}&quot;)
+        if name in pooled:
+            pooled[name][0] += passed
+            pooled[name][1] += 1
+
+print(&quot;\n=== Release gate ===&quot;)
+for k, (p, n) in pooled.items():
+    rate = p / n if n else 0
+    flag = &quot;OK &quot; if rate &gt;= POOLED[k] else &quot;LOW&quot;
+    print(f&quot;{flag} {k:&lt;14} pass rate {rate:.0%} (threshold {POOLED[k]:.0%})&quot;)
+    if rate &lt; POOLED[k]:
+        blocking.append(f&quot;{k} pass rate {rate:.0%} below {POOLED[k]:.0%}&quot;)
+if blocking:
+    print(&quot;\nBLOCKED - release-blocking failures:&quot;)
+    for b in blocking:
+        print(&quot;  -&quot;, b)
+    sys.exit(1 if a.gate else 0)
+print(&quot;\nPASSED - candidate may be promoted&quot;)
+</code></pre></div></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s21" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Run against v1</h4><div class="code"><div class="code-bar"><span class="code-title">bash</span><button class="copy" type="button" data-target="c15">Copy</button></div><pre id="c15"><code>python eval/run_eval.py --agent-version 1</code></pre></div><p>Copy the printed <b>eval id</b>. Reuse it for every later run so the runs line up in the comparison view: <code>export BENEFITS_EVAL_ID=&lt;id&gt;</code>.</p></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s22" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Review results in the portal</h4><p>Open the printed report URL (<b>Evaluations</b> tab). Show:</p><ul><li>Pass/fail counts per evaluator and token usage per model</li><li>Row-level drill-down: query, agent response, and each evaluator's score and reasoning</li><li>Results for the near-neighbor slice</li></ul><div class="callout ok"><strong>Expected baseline</strong><div>All critical rows pass the three domain evaluators; groundedness and relevance are at or above 90%. The gate prints <b>PASSED</b>.</div></div><div class="callout info"><strong>If a baseline row fails</strong><div>Tune the v1 instructions or the dataset terms until the baseline is clean. A noisy baseline weakens the regression story. In a real program this is the SME calibration step.</div></div></div></div></section><section id="regression" class="module"><div class="mod-head"><span class="mod-num">08</span><div><h2>Stage 2 - Introduce the regression (v2)</h2><p class="mins">15 min</p></div></div><p class="lead">Simulate a realistic change: a prompt edit meant to shorten answers that merges speech and voice therapy.</p><div class="step"><label class="chk"><input type="checkbox" data-step="s23" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Create v2</h4><p>Open <code>benefits-agent</code>, append this rule to the instructions, and save. Note the new version: <b>v2</b>.</p><div class="code"><div class="code-bar"><span class="code-title">Rule appended for v2</span><button class="copy" type="button" data-target="c16">Copy</button></div><pre id="c16"><code>8. Terminology normalization (added to shorten answers):
+   speech therapy, speech-language therapy, and voice therapy all refer to the
+   Voice Therapy benefit. Use the Voice Therapy record for any of these terms.
+</code></pre></div></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s24" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Show the problem in the playground</h4><p>Ask the speech therapy question again. The answer is fluent, cites a real record, and says <b>$60</b> and <b>10 visits</b>, which are the voice therapy facts. Open the trace: the answer is grounded in the retrieved Voice Therapy chunk.</p></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s25" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Evaluate v2 against the same eval</h4><div class="code"><div class="code-bar"><span class="code-title">bash</span><button class="copy" type="button" data-target="c17">Copy</button></div><pre id="c17"><code>python eval/run_eval.py --agent-version 2 --eval-id &quot;$BENEFITS_EVAL_ID&quot; --gate</code></pre></div><div class="callout bad"><strong>Expected outcome</strong><div>Groundedness and relevance stay high because the answer is supported by a retrieved record. <b>benefits_service_match</b> and <b>benefits_cost_accuracy</b> fail on the critical speech therapy rows (BEN-Q001 to BEN-Q003, BEN-Q006). The gate prints <b>BLOCKED</b> and exits 1.</div></div><div class="callout info"><strong>Alternative regression</strong><div>For a retrieval-side regression instead, set the Search tool to keyword-only with top-k 1 in v2. This is less deterministic; the prompt change is more reliable for a live demo.</div></div></div></div></section><section id="compare" class="module"><div class="mod-head"><span class="mod-num">09</span><div><h2>Stage 3 - Compare runs and govern the release</h2><p class="mins">15 min</p></div></div><p class="lead">Show baseline and candidate side by side, then turn the failure into a permanent regression case.</p><div class="step"><label class="chk"><input type="checkbox" data-step="s26" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Compare in the portal</h4><p><b>Evaluations</b> &gt; open <i>Benefits agent - domain evaluation</i> &gt; select both runs &gt; <b>Compare</b>. Highlight the domain evaluator columns going from pass to fail while groundedness barely moves.</p></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s27" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Show the gate output</h4><p>Show the <code>BLOCKED - release-blocking failures</code> list from the terminal: scenario ID, slice, evaluator, and query.</p></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s28" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Close the loop</h4><ul><li>Add any newly observed failure as a new row (e.g. BEN-Q021) with SME-approved expected values.</li><li>Upload it as a new dataset version (<code>--dataset-version 2</code>) so history stays reproducible.</li><li>Revert v2 or publish a fixed v3; re-run until the gate passes.</li></ul></div></div></section><section id="github" class="module"><div class="mod-head"><span class="mod-num">10</span><div><h2>Automate the gate with GitHub Actions</h2><p class="mins">30 min</p></div></div><p class="lead">Move the same script into CI so a failing evaluation blocks the merge. Authentication uses OIDC federation, so no secrets are stored.</p><div class="step"><label class="chk"><input type="checkbox" data-step="s29" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Push the project to GitHub</h4><div class="code"><div class="code-bar"><span class="code-title">bash</span><button class="copy" type="button" data-target="c18">Copy</button></div><pre id="c18"><code>git init &amp;&amp; git add . &amp;&amp; git commit -m &quot;Benefits evaluation lab&quot;
+gh repo create &lt;org&gt;/benefits-eval-lab --private --source . --push</code></pre></div></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s30" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Create the Entra app and federated credential</h4><div class="code"><div class="code-bar"><span class="code-title">bash</span><button class="copy" type="button" data-target="c19">Copy</button></div><pre id="c19"><code>APP_ID=$(az ad app create --display-name gh-benefits-eval --query appId -o tsv)
+az ad sp create --id $APP_ID
+az ad app federated-credential create --id $APP_ID --parameters &#x27;{
+  &quot;name&quot;: &quot;gh-eval-demo-env&quot;,
+  &quot;issuer&quot;: &quot;https://token.actions.githubusercontent.com&quot;,
+  &quot;subject&quot;: &quot;repo:&lt;org&gt;/&lt;repo&gt;:environment:eval-demo&quot;,
+  &quot;audiences&quot;: [&quot;api://AzureADTokenExchange&quot;]
+}&#x27;
+az role assignment create --assignee $APP_ID --role &quot;Foundry User&quot; --scope &lt;foundry-project-resource-id&gt;
+
+# GitHub: Settings &gt; Environments &gt; New environment &quot;eval-demo&quot;, then add variables
+gh variable set AZURE_CLIENT_ID           --env eval-demo --body &quot;$APP_ID&quot;
+gh variable set AZURE_TENANT_ID           --env eval-demo --body &quot;&lt;tenant-id&gt;&quot;
+gh variable set AZURE_SUBSCRIPTION_ID     --env eval-demo --body &quot;&lt;subscription-id&gt;&quot;
+gh variable set AZURE_AI_PROJECT_ENDPOINT --env eval-demo --body &quot;&lt;project-endpoint&gt;&quot;
+gh variable set JUDGE_DEPLOYMENT          --env eval-demo --body &quot;&lt;judge-deployment&gt;&quot;
+gh variable set BENEFITS_EVAL_ID                --env eval-demo --body &quot;&lt;eval-id-from-baseline&gt;&quot;</code></pre></div></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s31" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Add the workflow</h4><div class="code"><div class="code-bar"><span class="code-title">.github/workflows/benefits-eval-gate.yml</span><button class="copy" type="button" data-target="c20">Copy</button></div><pre id="c20"><code>name: benefits-eval-gate
+on:
+  workflow_dispatch:
+    inputs:
+      agent_version:
+        description: &quot;Candidate agent version to evaluate&quot;
+        required: true
+  pull_request:
+    paths: [&quot;agent/**&quot;, &quot;eval/**&quot;]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    environment: eval-demo
+    env:
+      AZURE_AI_PROJECT_ENDPOINT: ${{ vars.AZURE_AI_PROJECT_ENDPOINT }}
+      AZURE_AI_MODEL_DEPLOYMENT_NAME: ${{ vars.JUDGE_DEPLOYMENT }}
+      AGENT_NAME: benefits-agent
+      BENEFITS_EVAL_ID: ${{ vars.BENEFITS_EVAL_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: &quot;3.11&quot;
+      - run: pip install -r eval/requirements.txt
+      - name: Benefits evaluation release gate
+        run: python eval/run_eval.py --agent-version &quot;${{ inputs.agent_version || vars.CANDIDATE_VERSION }}&quot; --gate
+</code></pre></div></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s32" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Optional: add Microsoft's packaged evaluation action</h4><p>The <code>microsoft/ai-agent-evals</code> action runs several agent versions against a dataset and produces a comparison report with confidence intervals. Add it as a second job next to the gate job.</p><div class="code"><div class="code-bar"><span class="code-title">append under jobs:</span><button class="copy" type="button" data-target="c21">Copy</button></div><pre id="c21"><code>  # Optional: Microsoft&#x27;s packaged action - side-by-side report with statistical significance
+  compare:
+    runs-on: ubuntu-latest
+    environment: eval-demo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - uses: microsoft/ai-agent-evals@&lt;pinned-release-tag&gt;   # pin the tag shown on the Marketplace page
+        with:
+          azure-ai-project-endpoint: ${{ vars.AZURE_AI_PROJECT_ENDPOINT }}
+          deployment-name: ${{ vars.JUDGE_DEPLOYMENT }}
+          data-path: eval/benefits-gold-action.json
+          agent-ids: benefits-agent:1,benefits-agent:2
+          baseline-agent-id: benefits-agent:1
+</code></pre></div><div class="code"><div class="code-bar"><span class="code-title">eval/benefits-gold-action.json</span><button class="copy" type="button" data-target="c22">Copy</button></div><pre id="c22"><code>{
+  &quot;name&quot;: &quot;benefits-gold-action&quot;,
+  &quot;evaluators&quot;: [
+    &quot;builtin.relevance&quot;,
+    &quot;builtin.task_adherence&quot;,
+    &quot;builtin.response_completeness&quot;
+  ],
+  &quot;data&quot;: [
+    {
+      &quot;query&quot;: &quot;Is speech therapy covered under my plan, and what will I pay?&quot;,
+      &quot;ground_truth&quot;: &quot;Speech therapy is covered: $35 copay per in-network visit, 20 visits per year; prior authorization after the 12th visit.&quot;
+    },
+    {
+      &quot;query&quot;: &quot;How many speech therapy visits do I get each year?&quot;,
+      &quot;ground_truth&quot;: &quot;Speech therapy is limited to 20 visits per calendar year.&quot;
+    },
+    {
+      &quot;query&quot;: &quot;Do I need prior authorization for speech therapy?&quot;,
+      &quot;ground_truth&quot;: &quot;Prior authorization is required after the 12th speech therapy visit in a calendar year.&quot;
+    },
+    {
+      &quot;query&quot;: &quot;What does voice therapy cost me?&quot;,
+      &quot;ground_truth&quot;: &quot;Voice therapy is covered when medically necessary: $60 copay, 10 visits per year, prior authorization before the first visit.&quot;
+    },
+    {
+      &quot;query&quot;: &quot;Is vocal coaching for singing covered?&quot;,
+      &quot;ground_truth&quot;: &quot;Vocal coaching and singing lessons are not covered.&quot;
+    },
+    {
+      &quot;query&quot;: &quot;My son needs speech therapy from an out-of-network therapist. What will I pay?&quot;,
+      &quot;ground_truth&quot;: &quot;Out-of-network speech therapy is 40% coinsurance after the $500 deductible.&quot;
+    },
+    {
+      &quot;query&quot;: &quot;Is out-of-network voice therapy covered?&quot;,
+      &quot;ground_truth&quot;: &quot;Out-of-network voice therapy is not covered.&quot;
+    },
+    {
+      &quot;query&quot;: &quot;What is my copay for occupational therapy?&quot;,
+      &quot;ground_truth&quot;: &quot;Occupational therapy: $45 copay per visit, 24 visits per year.&quot;
+    },
+    {
+      &quot;query&quot;: &quot;How many physical therapy visits are covered?&quot;,
+      &quot;ground_truth&quot;: &quot;Physical therapy is limited to 30 visits per year.&quot;
+    },
+    {
+      &quot;query&quot;: &quot;Are teeth cleanings covered?&quot;,
+      &quot;ground_truth&quot;: &quot;Preventive cleanings are covered at 100% in-network twice per year.&quot;
+    },
+    {
+      &quot;query&quot;: &quot;What do I pay for a filling?&quot;,
+      &quot;ground_truth&quot;: &quot;Fillings are covered at 80% after deductible in-network.&quot;
+    },
+    {
+      &quot;query&quot;: &quot;How much is a routine eye exam?&quot;,
+      &quot;ground_truth&quot;: &quot;A routine eye exam is a $10 copay once every 12 months.&quot;
+    },
+    {
+      &quot;query&quot;: &quot;What is my allowance for glasses frames?&quot;,
+      &quot;ground_truth&quot;: &quot;Frames have a $150 allowance every 24 months.&quot;
+    },
+    {
+      &quot;query&quot;: &quot;What is my copay for a preferred brand drug?&quot;,
+      &quot;ground_truth&quot;: &quot;Tier 2 preferred brand is a $35 copay for a 30-day retail supply.&quot;
+    },
+    {
+      &quot;query&quot;: &quot;What does a 90-day mail order generic cost?&quot;,
+      &quot;ground_truth&quot;: &quot;A 90-day mail-order Tier 1 generic costs $20 (2x retail).&quot;
+    },
+    {
+      &quot;query&quot;: &quot;Is acupuncture covered?&quot;,
+      &quot;ground_truth&quot;: &quot;Acupuncture is not covered.&quot;
+    },
+    {
+      &quot;query&quot;: &quot;What do I pay for outpatient therapy with a psychologist?&quot;,
+      &quot;ground_truth&quot;: &quot;Outpatient mental health is a $25 copay per visit with no visit limit.&quot;
+    },
+    {
+      &quot;query&quot;: &quot;Do I need approval before an MRI and what will it cost?&quot;,
+      &quot;ground_truth&quot;: &quot;MRI requires prior authorization; $250 copay per scan.&quot;
+    },
+    {
+      &quot;query&quot;: &quot;Is therapy covered?&quot;,
+      &quot;ground_truth&quot;: &quot;Ambiguous - the assistant should ask which type of therapy.&quot;
+    },
+    {
+      &quot;query&quot;: &quot;Is hippotherapy covered?&quot;,
+      &quot;ground_truth&quot;: &quot;No record exists - the assistant should say it cannot find the benefit and refer to Member Services.&quot;
+    }
+  ]
+}</code></pre></div><div class="callout warn"><strong>Preview</strong><div>The GitHub Action evaluation is in preview. Present it as the automation pattern, not a production commitment.</div></div></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s33" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Require the check</h4><p>Repo <b>Settings &gt; Rules / Branches</b> &gt; protect <code>main</code> &gt; <b>Require status checks to pass</b> &gt; select <code>evaluate</code>.</p></div></div><div class="step"><label class="chk"><input type="checkbox" data-step="s34" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Demo it</h4><p><b>Actions &gt; benefits-eval-gate &gt; Run workflow</b> with <code>agent_version = 2</code>. The job fails, and a PR touching <code>agent/</code> or <code>eval/</code> cannot merge. Re-run with <code>1</code> to show a green gate.</p></div></div></section><section id="optional" class="module"><div class="mod-head"><span class="mod-num">11</span><div><h2>Optional: production monitoring and red teaming</h2><p class="mins">Optional - 20 min</p></div></div><p class="lead">Use these to answer questions about what happens after go-live. Show them only if time allows.</p><div class="tbl"><table><thead><tr><th>Capability</th><th>Where</th><th>What to show</th></tr></thead><tbody><tr><td>Continuous evaluation</td><td>Foundry project &gt; agent &gt; Monitor / continuous evaluation</td><td>Sampled production responses scored by the same evaluators</td></tr><tr><td>Trace evaluation</td><td>Cloud evaluation with the <code>azure_ai_traces</code> data source</td><td>Score past interactions from Application Insights by trace ID</td></tr><tr><td>Agent monitoring dashboard</td><td>Foundry Observability</td><td>Latency, token, error, and evaluation trends over time</td></tr><tr><td>AI red teaming</td><td>Foundry AI Red Teaming Agent (<code>azure_ai_red_team</code>)</td><td>Adversarial probes against v1; safety results in the Evaluations tab</td></tr><tr><td>Synthetic data</td><td><code>azure_ai_synthetic_data_gen_preview</code></td><td>Expand the 20 scenarios into hundreds of variants for SME review</td></tr></tbody></table></div></section><section id="runofshow" class="module"><div class="mod-head"><span class="mod-num">12</span><div><h2>Presenting this lab as a live demo</h2><p class="mins">20-minute demo</p></div></div><p class="lead">The Part A / Part B split separates what the platform provides from what your organization implements.</p><div class="tbl"><table><thead><tr><th>Min</th><th>Show</th><th>Say</th></tr></thead><tbody><tr><td>0-2</td><td>Architecture view (lab overview)</td><td>This is a deliberately small app. The point is the evaluation method, not the app.</td></tr><tr><td>2-5</td><td>Playground: v1 speech therapy answer + trace</td><td>Correct service, coverage, and cost - and the trace shows exactly what was retrieved.</td></tr><tr><td>5-8</td><td><b>Part A</b>: dataset, built-in evaluators, baseline results</td><td>Groundedness, relevance, completeness, and task adherence come with the platform.</td></tr><tr><td>8-11</td><td><b>Part B</b>: gold dataset fields + 3 custom evaluators</td><td>Exact cost, coverage, and near-neighbor checks are organization-owned domain logic.</td></tr><tr><td>11-15</td><td>v2 regression: playground, then run comparison</td><td>Grounded, fluent, and wrong for the member. Only the domain evaluators catch it.</td></tr><tr><td>15-18</td><td>GitHub Actions: red gate, blocked merge</td><td>A failed critical scenario stops promotion automatically.</td></tr><tr><td>18-20</td><td>Feedback loop + next steps</td><td>Every production failure becomes a permanent regression case. Agree on owners and thresholds.</td></tr></tbody></table></div><div class="callout info"><strong>Pre-flight (day before)</strong><div>Run the v1 and v2 evaluations; keep both report URLs open in tabs; run the GitHub workflow once each way; confirm sign-in works on the presenting machine; keep screenshots as a fallback.</div></div></section><section id="troubleshoot" class="module"><div class="mod-head"><span class="mod-num">13</span><div><h2>Troubleshooting and cleanup</h2><p class="mins">Reference</p></div></div><p class="lead">Common issues and how to fix them.</p><div class="tbl"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody><tr><td>403 on evals or datasets</td><td>Missing Foundry User role</td><td>Assign it at project scope; allow about 5 minutes to propagate</td></tr><tr><td>Agent answers "no information"</td><td>Project identity cannot read the index</td><td>Grant Search Index Data Reader to the project managed identity</td></tr><tr><td>Groundedness errors on <code>output_items</code></td><td>Evaluator input shape changed</td><td>Add an <code>approved_context</code> field to the dataset and map <code>context</code> to it</td></tr><tr><td>Custom evaluator scores all 0</td><td>Field names not mapped</td><td>Check the <code>data_mapping</code> keys match the <code>item.get(...)</code> names in <code>grade</code></td></tr><tr><td>Safety evaluator unavailable</td><td>Region restriction</td><td>Use a project in a supported evaluation region, or drop safety from the live demo</td></tr><tr><td>GitHub login fails (AADSTS700213)</td><td>OIDC subject mismatch</td><td>The subject must be <code>repo:&lt;org&gt;/&lt;repo&gt;:environment:eval-demo</code></td></tr><tr><td>v1 baseline fails some rows</td><td>Prompt or term sensitivity</td><td>Tighten the instructions or adjust the <code>expected_cost_terms</code> wording; recalibrate</td></tr></tbody></table></div><div class="step"><label class="chk"><input type="checkbox" data-step="s35" aria-label="Mark step done"><span></span></label><div class="step-body"><h4>Clean up after the engagement</h4><ul><li>Delete agent versions you no longer need, the search index, and the <code>benefits-docs</code> container.</li><li>Delete the <code>gh-benefits-eval</code> app registration.</li><li>Keep the repo as a starter template for a production evaluation program.</li></ul></div></div></section>
+<section class="module" id="refs"><h2>References</h2><ul class='refs'><li><a href="https://learn.microsoft.com/en-us/azure/foundry/observability/how-to/cloud-evaluation">Cloud evaluation with the Foundry SDK</a></li><li><a href="https://learn.microsoft.com/en-us/azure/foundry/observability/how-to/cloud-evaluation-targets">Evaluate model and agent targets</a></li><li><a href="https://learn.microsoft.com/en-us/azure/foundry/observability/how-to/evaluate-agent">Evaluate your AI agents</a></li><li><a href="https://learn.microsoft.com/en-us/azure/foundry/concepts/evaluation-evaluators/custom-evaluators">Custom evaluators</a></li><li><a href="https://learn.microsoft.com/en-us/azure/foundry/how-to/evaluation-github-action">Run an evaluation in GitHub Actions</a></li><li><a href="https://github.com/microsoft/ai-agent-evals">microsoft/ai-agent-evals (GitHub)</a></li></ul>
+<p class="mins">APIs marked preview may change; confirm parameters against these pages before the session.</p></section>
+</main>
+</div>
+<footer>Sample lab content provided as-is for learning purposes. Contoso Health and all plans, benefits, and members are fictional. Features marked preview may change. Last updated November 2026.</footer>
+<script>(function(){
+  function fallback(t){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(a);}
+  document.querySelectorAll('button.copy').forEach(function(b){
+    b.addEventListener('click',function(){
+      var t=document.getElementById(b.getAttribute('data-target')).innerText;
+      var done=function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy';},1500);};
+      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,function(){fallback(t);done();});}
+      else{fallback(t);done();}
+    });
+  });
+  var boxes=[].slice.call(document.querySelectorAll('input[data-step]'));
+  var store={};try{store=JSON.parse(localStorage.getItem('benefits-eval-lab')||'{}');}catch(e){}
+  function upd(){var n=boxes.filter(function(x){return x.checked;}).length;
+    document.getElementById('pct').textContent=n+' of '+boxes.length+' steps done';
+    document.getElementById('barfill').style.width=(100*n/boxes.length)+'%';}
+  boxes.forEach(function(x){x.checked=!!store[x.getAttribute('data-step')];
+    x.addEventListener('change',function(){store[x.getAttribute('data-step')]=x.checked;
+      try{localStorage.setItem('benefits-eval-lab',JSON.stringify(store));}catch(e){} upd();});});
+  upd();
+})();
+</script>
+</body>
+</html>
